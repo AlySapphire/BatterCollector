@@ -24,6 +24,16 @@ public:
 	//Return the mesh for the pickup
 	FORCEINLINE UStaticMeshComponent* GetMesh() const { return m_PickupMesh; }
 
+	UFUNCTION(BlueprintPure, Category = "Pickup")
+	bool IsActive();
+
+	UFUNCTION(BlueprintCallable, Category = "Pickup")
+	void SetActive(bool NewPickupState);
+
+protected:
+	//True when pickup can be used and false when deactivated
+	bool bIsActive;
+
 private:
 	//Static mesh to represent the pickup in the level
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Pickup", meta = (AllowPrivateAccess = "true"))
