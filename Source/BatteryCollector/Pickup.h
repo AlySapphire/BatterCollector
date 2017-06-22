@@ -24,6 +24,7 @@ public:
 	//Return the mesh for the pickup
 	FORCEINLINE UStaticMeshComponent* GetMesh() const { return m_PickupMesh; }
 
+	//We can't force inline since UFUNCTION macro's are incompatible
 	UFUNCTION(BlueprintPure, Category = "Pickup")
 	bool IsActive();
 
