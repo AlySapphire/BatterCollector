@@ -3,6 +3,7 @@
 #include "BatteryCollector.h"
 #include "Kismet/HeadMountedDisplayFunctionLibrary.h"
 #include "BatteryCollectorCharacter.h"
+#include "Pickup.h"
 
 //////////////////////////////////////////////////////////////////////////
 // ABatteryCollectorCharacter
@@ -38,6 +39,11 @@ ABatteryCollectorCharacter::ABatteryCollectorCharacter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
+	//Create collection sphere
+	CollectionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CollectionSphere"));
+	CollectionSphere->SetupAttachment(RootComponent);
+	CollectionSphere->SetSphereRadius(200.0f);
+
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
 }
@@ -51,6 +57,8 @@ void ABatteryCollectorCharacter::SetupPlayerInputComponent(class UInputComponent
 	check(PlayerInputComponent);
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+
+	PlayerInputComponent->BindAction("Collect", IE_Pressed, this, &ABatteryCollectorCharacter::CollectPickups);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &ABatteryCollectorCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ABatteryCollectorCharacter::MoveRight);
@@ -71,6 +79,29 @@ void ABatteryCollectorCharacter::SetupPlayerInputComponent(class UInputComponent
 	PlayerInputComponent->BindAction("ResetVR", IE_Pressed, this, &ABatteryCollectorCharacter::OnResetVR);
 }
 
+
+void ABatteryCollectorCharacter::CollectPickups() {
+
+	//Get all overlapping Actors and store them
+	TArray<AActor*> collectedActors;
+	CollectionSphere->GetOverlappingActors(collectedActors);
+
+	//For each actor we collected
+	for(int32 iCollected = 0; iCollected < collectedActors.Num(); iCollected++) {
+
+		//Cast the actor to APickup
+		APickup* const testPickup = Cast<APickup>(collectedActors[iCollected]);
+
+		//If the cast is successful and the pickup is valid and active
+		if(testPickup && !testPickup->IsPendingKill() && testPickup->IsActive()) {
+
+			//Call the pickup's WasCollected function
+			testPickup->WasCollected();
+			//Deactivate the pickup
+			testPickup->SetActive(false);
+		}
+	}
+}
 
 void ABatteryCollectorCharacter::OnResetVR()
 {
