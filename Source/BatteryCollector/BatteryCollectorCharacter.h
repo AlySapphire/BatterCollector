@@ -70,13 +70,24 @@ protected:
 	void CollectPickups();
 
 	//Starting power level of character
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Power")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Power", meta = (BlueprintProtected = "true"))
 	float initialPower;
+
+	//Multiplier for character speed
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Power", meta = (BlueprintProtected = "true"))
+	float speedFactor;
+
+	//Speed when power level is 0
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Power", meta = (BlueprintProtected = "true"))
+	float baseSpeed;
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Power")
+	void PowerChangeEffect();
 
 private:
 	//Current power level of our character
 	UPROPERTY(VisibleAnywhere, Category = "Power")
-	float m_characterPower;
+	float characterPower;
 
 public:
 	/** Returns CameraBoom subobject **/
