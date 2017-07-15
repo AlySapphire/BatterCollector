@@ -3,6 +3,15 @@
 #include "GameFramework/GameModeBase.h"
 #include "BatteryCollectorGameMode.generated.h"
 
+//Enum to store gameplay state
+UENUM(BlueprintType)
+enum class eBatteryPlayState : uint8 {
+	ePlaying,
+	eGameOver,
+	eWon,
+	eUnknown
+};
+
 UCLASS(minimalapi)
 class ABatteryCollectorGameMode : public AGameModeBase
 {
@@ -11,12 +20,42 @@ class ABatteryCollectorGameMode : public AGameModeBase
 public:
 	ABatteryCollectorGameMode();
 
+	virtual void BeginPlay() override;
+
 	virtual void Tick(float DeltaTime) override;
+
+	//Returns power needed to win - Needed for HUD
+	UFUNCTION(BlueprintPure, Category = "Power")
+	float GetPowerToWin() const;
+
+	//Returns current play state
+	UFUNCTION(BlueprintPure, Category = "Power")
+	eBatteryPlayState GetCurrentState() const;
+
+	//Set new play state
+	void SetCurrentState(eBatteryPlayState newState);
 
 protected:
 	//Rate that player loses power
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Power")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Power", meta = (BlueprintProtected = "true"))
 	float decayRate;
+
+	//Power needed to win the game
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Power", meta = (BlueprintProtected = "true"))
+	float powerToWin;
+
+	//The widget class to use for our HUD
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Power", meta = (BlueprintProtected = "true"))
+	TSubclassOf<class UUserWidget> HUDWidgetClass;
+
+	//HUD instance
+	UPROPERTY()
+	class UUserWidget* CurrentWidget;
+
+private:
+
+	//Keeps track of the current play state
+	eBatteryPlayState m_currentState;
 
 };
 
