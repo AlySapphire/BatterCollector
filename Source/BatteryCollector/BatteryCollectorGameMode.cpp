@@ -5,6 +5,7 @@
 #include "BatteryCollectorCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "Blueprint/UserWidget.h"
+#include "SpawnVolume.h"
 
 ABatteryCollectorGameMode::ABatteryCollectorGameMode()
 {
@@ -24,6 +25,17 @@ ABatteryCollectorGameMode::ABatteryCollectorGameMode()
 void ABatteryCollectorGameMode::BeginPlay() {
 
 	Super::BeginPlay();
+
+	//Find all spawn volume actors
+	TArray<AActor*> foundActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASpawnVolume::StaticClass(), foundActors);
+
+	for(auto actor : foundActors) {
+		ASpawnVolume* spawnVolumeActor = Cast<ASpawnVolume>(actor);
+		if(spawnVolumeActor) {
+			m_spawnVolumeActors.AddUnique(spawnVolumeActor);
+		}
+	}
 
 	SetCurrentState(eBatteryPlayState::ePlaying);
 
@@ -75,4 +87,51 @@ eBatteryPlayState ABatteryCollectorGameMode::GetCurrentState() const {
 
 void ABatteryCollectorGameMode::SetCurrentState(eBatteryPlayState newState) {
 	m_currentState = newState;
+	HandleNewState(newState);
+}
+
+void ABatteryCollectorGameMode::HandleNewState(eBatteryPlayState newState) {
+
+	switch(newState) {
+		case eBatteryPlayState::ePlaying:
+		{
+			//Spawn volumes active
+			for(auto volume : m_spawnVolumeActors) {
+				volume->SetSpawningActive(true);
+			}
+		}
+			break;
+		case eBatteryPlayState::eWon: 
+		{
+			//Spawn volumes inactive
+			for(auto volume : m_spawnVolumeActors) {
+				volume->SetSpawningActive(false);
+			}
+		}			
+			break;
+		case eBatteryPlayState::eGameOver:
+		{
+			//Spawn volumes inactive
+			for(auto volume : m_spawnVolumeActors) {
+				volume->SetSpawningActive(false);
+			}
+			//block input
+			APlayerController* player = UGameplayStatics::GetPlayerController(this, 0);
+			if(player) {
+				player->SetCinematicMode(true, false, false, true, true);
+			}
+
+			//ragdoll
+			ACharacter* myCharacter = UGameplayStatics::GetPlayerCharacter(this, 0);
+			if(myCharacter) {
+				myCharacter->GetMesh()->SetSimulatePhysics(true);
+				myCharacter->GetMovementComponent()->MovementState.bCanJump = false;
+			}
+
+		}			
+			break;
+		case eBatteryPlayState::eUnknown:
+			break;
+	}
+
 }
